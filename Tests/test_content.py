@@ -449,7 +449,7 @@ def mock_run(conf_json_test_details, tests_queue, tests_settings, c, proxy, fail
 
 def run_test(conf_json_test_details, tests_queue, tests_settings, demisto_user, demisto_pass, proxy, failed_playbooks,
              integrations, unmockable_integrations, playbook_id, succeed_playbooks, test_message, test_options,
-             slack, circle_ci, build_number, server_url, build_name, prints_manager, is_ami=True, thread_index=0):
+             slack, circle_ci, build_number, server_url, build_name, prints_manager, is_ami=True, thread_index=0, is_private=False):
     start_message = f'------ Test {test_message} start ------'
     client = demisto_client.configure(base_url=server_url, username=demisto_user, password=demisto_pass, verify_ssl=False)
 
@@ -462,9 +462,10 @@ def run_test(conf_json_test_details, tests_queue, tests_settings, demisto_user, 
                                      include_timestamp=True)
 
         return
-    mock_run(conf_json_test_details, tests_queue, tests_settings, client, proxy, failed_playbooks, integrations,
-             playbook_id, succeed_playbooks, test_message, test_options, slack, circle_ci, build_number,
-             server_url, build_name, start_message, prints_manager, thread_index=thread_index)
+    if not is_private:
+        mock_run(conf_json_test_details, tests_queue, tests_settings, client, proxy, failed_playbooks, integrations,
+                 playbook_id, succeed_playbooks, test_message, test_options, slack, circle_ci, build_number,
+                 server_url, build_name, start_message, prints_manager, thread_index=thread_index)
 
 
 def http_request(url, params_dict=None):
@@ -640,7 +641,7 @@ def run_test_scenario(tests_queue, tests_settings, t, proxy, default_test_timeou
                       failed_playbooks, playbook_skipped_integration, unmockable_integrations,
                       succeed_playbooks, slack, circle_ci, build_number, server, build_name,
                       server_numeric_version, demisto_user, demisto_pass, demisto_api_key,
-                      prints_manager, thread_index=0, is_ami=True):
+                      prints_manager, thread_index=0, is_ami=True, is_private=False):
     playbook_id = t['playbookID']
     nightly_test = t.get('nightly', False)
     integrations_conf = t.get('integrations', [])
@@ -726,7 +727,7 @@ def run_test_scenario(tests_queue, tests_settings, t, proxy, default_test_timeou
     run_test(t, tests_queue, tests_settings, demisto_user, demisto_pass, proxy, failed_playbooks,
              integrations, unmockable_integrations, playbook_id, succeed_playbooks, test_message,
              test_options, slack, circle_ci, build_number, server, build_name, prints_manager,
-             is_ami, thread_index=thread_index)
+             is_ami, thread_index=thread_index, is_private=is_private)
 
 
 def load_env_results_json():
@@ -905,7 +906,7 @@ def execute_testing(tests_settings, server_ip, mockable_tests_names, unmockable_
                                   skipped_tests, secret_params, failed_playbooks, playbook_skipped_integration,
                                   unmockable_integrations, succeed_playbooks, slack, circle_ci, build_number, server,
                                   build_name, server_numeric_version, demisto_user, demisto_pass,
-                                  demisto_api_key, prints_manager, thread_index=thread_index)
+                                  demisto_api_key, prints_manager, thread_index=thread_index, is_private=is_private)
             proxy.configure_proxy_in_demisto(username=demisto_user, password=demisto_pass, server=server)
 
             # reset containers after clearing the proxy server configuration
@@ -926,7 +927,7 @@ def execute_testing(tests_settings, server_ip, mockable_tests_names, unmockable_
                               secret_params, failed_playbooks, playbook_skipped_integration, unmockable_integrations,
                               succeed_playbooks, slack, circle_ci, build_number, server, build_name,
                               server_numeric_version, demisto_user, demisto_pass, demisto_api_key,
-                              prints_manager, thread_index, is_ami)
+                              prints_manager, thread_index, is_ami, is_private=is_private)
             prints_manager.execute_thread_prints(thread_index)
 
     except Exception as exc:
