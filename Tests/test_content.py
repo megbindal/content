@@ -347,25 +347,25 @@ def run_test_logic(conf_json_test_details, tests_queue, tests_settings, c, faile
                                              message_color=LOG_COLORS.GREEN)
                 succeed_playbooks.append(playbook_id)
 
-            elif status == PB_Status.NOT_SUPPORTED_VERSION:
-                not_supported_version_message = 'PASS: {} skipped - not supported version'.format(test_message)
-                prints_manager.add_print_job(not_supported_version_message, print, thread_index)
-                succeed_playbooks.append(playbook_id)
+    elif status == PB_Status.NOT_SUPPORTED_VERSION:
+        not_supported_version_message = 'PASS: {} skipped - not supported version'.format(test_message)
+        prints_manager.add_print_job(not_supported_version_message, print, thread_index)
+        succeed_playbooks.append(playbook_id)
 
-            else:
-                error_message = 'Failed: {} failed'.format(test_message)
-                prints_manager.add_print_job(error_message, print_error, thread_index)
-                playbook_id_with_mock = playbook_id
-                if not is_mock_run:
-                    playbook_id_with_mock += " (Mock Disabled)"
-                failed_playbooks.append(playbook_id_with_mock)
-                if not tests_settings.is_local_run:
-                    notify_failed_test(slack, circle_ci, playbook_id, build_number, inc_id, server_url, build_name)
+    else:
+        error_message = 'Failed: {} failed'.format(test_message)
+        prints_manager.add_print_job(error_message, print_error, thread_index)
+        playbook_id_with_mock = playbook_id
+        if not is_mock_run:
+            playbook_id_with_mock += " (Mock Disabled)"
+        failed_playbooks.append(playbook_id_with_mock)
+        if not tests_settings.is_local_run:
+            notify_failed_test(slack, circle_ci, playbook_id, build_number, inc_id, server_url, build_name)
 
-            succeed = status in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
-        else:
-            tests_queue.put(conf_json_test_details)
-            succeed = False
+    succeed = status in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
+        # else:
+        #     tests_queue.put(conf_json_test_details)
+        #     succeed = False
 
     return succeed
 
