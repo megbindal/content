@@ -53,6 +53,9 @@ def get_packs_names(target_packs):
     elif target_packs and isinstance(target_packs, str):
         modified_packs = {p.strip() for p in target_packs.split(',') if p not in IGNORED_FILES}
         logging.info(f"Number of selected packs to upload is: {len(modified_packs)}")
+        modified_packs.add('DeveloperTools')
+        modified_packs.add('Developer Tools')
+        print(f"Number of selected packs to upload is: {len(modified_packs)}")
         # return only packs from csv list
         return modified_packs
     else:
