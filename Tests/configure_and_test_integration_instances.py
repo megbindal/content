@@ -1030,7 +1030,7 @@ def install_nightly_pack(build, prints_manager):
     create_nightly_test_pack(build)
     pack_path = f'{Build.test_pack_target}/test_pack.zip'
     if build.is_private:
-        pack_path = f'/home/runner/work/content-private/content-private/content/test_pack.zip'
+        pack_path = '/home/runner/work/content-private/content-private/content/test_pack.zip'
     nightly_install_packs(build, threads_print_manager, install_method=upload_zipped_packs, pack_path=pack_path)
 
     prints_manager.add_print_job('Sleeping for 45 seconds...', print_warning, 0, include_timestamp=True)
@@ -1234,7 +1234,7 @@ def test_pack_metadata():
 def test_pack_zip(build: Build):
     if build.is_private:
         content_path = '/home/runner/work/content-private/content-private/content'
-        target = f'/home/runner/work/content-private/content-private/content/test_pack.zip'
+        target = '/home/runner/work/content-private/content-private/content/test_pack.zip'
     else:
         content_path = build.content_path
         target = build.test_pack_target
@@ -1306,6 +1306,7 @@ def main():
         set_marketplace_url(build.servers, build.branch_name, build.ci_build_number)
         installed_content_packs_successfully = install_packs(build,
                                                              prints_manager) and installed_content_packs_successfully
+        install_nightly_pack(build, prints_manager)
 
     all_module_instances.extend(brand_new_integrations)
     successful_tests_post, failed_tests_post = instance_testing(build, all_module_instances, prints_manager,
