@@ -195,6 +195,8 @@ def install_packs_private(client, host, prints_manager, thread_index, packs_to_i
         packs_to_install (list): A list of the packs to install.
     """
     install_packs_from_artifacts(client, host, prints_manager, thread_index, packs_to_install)
+    #  Sometimes DeveloperTools is not included in the install from bucket. This ensures it is always installed
+    install_packs(client, host, prints_manager, thread_index, packs_to_install=['DeveloperTools'])
 
 
 def install_packs_from_artifacts(client, host, prints_manager, thread_index, packs_to_install):
