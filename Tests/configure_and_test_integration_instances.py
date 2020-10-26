@@ -1040,7 +1040,7 @@ def install_nightly_pack(build, prints_manager):
     sleep(45)
 
 
-def install_private_pack(build, prints_manager):
+def create_install_private_testing_pack(build, prints_manager):
     threads_print_manager = ParallelPrintsManager(len(build.servers))
     private_test_pack_zip()
     pack_path = '/home/runner/work/content-private/content-private/content/test_pack.zip'
@@ -1352,13 +1352,13 @@ def get_non_added_packs_ids(build: Build):
     return set(get_pack_ids_to_install()) - set(added_pack_ids)
 
 
-# def set_marketplace_url(servers, branch_name, ci_build_number):
-#     url_suffix = f'{branch_name}/{ci_build_number}'
-#     config_path = 'marketplace.bootstrap.bypass.url'
-#     config = {config_path: f'https://storage.googleapis.com/marketplace-ci-build/content/builds/{url_suffix}'}
-#     for server in servers:
-#         server.add_server_configuration(config, 'failed to configure marketplace custom url ', True)
-#     sleep(60)
+def set_marketplace_url(servers, branch_name, ci_build_number):
+    url_suffix = f'{branch_name}/{ci_build_number}'
+    config_path = 'marketplace.bootstrap.bypass.url'
+    config = {config_path: f'https://storage.googleapis.com/marketplace-ci-build/content/builds/{url_suffix}'}
+    for server in servers:
+        server.add_server_configuration(config, 'failed to configure marketplace custom url ', True)
+    sleep(60)
 
 
 def main():
@@ -1370,14 +1370,10 @@ def main():
     if build.is_private:
         #  Get a list of the test we need to run.
         tests_for_iteration = get_tests(build.server_numeric_version, prints_manager, build.tests)
-        print(f"List of tests to run: {tests_for_iteration}")
-        # #  Setting the marketplace url in the server to point to the test bucket.
-        # set_marketplace_url(build.servers, build.branch_name, build.ci_build_number)
         #  Installing the packs.
         installed_content_packs_successfully = install_packs_private(build, prints_manager)
         #  Get a list of the integrations that have changed.
         new_integrations, modified_integrations = get_changed_integrations(build, prints_manager)
-        print(f"Identified {new_integrations} as new integrations.\nIdentified {modified_integrations} as modified integrations.")
         #  Configuring the instances which are used in testing.
         all_module_instances, brand_new_integrations = \
             configure_server_instances(build, tests_for_iteration, new_integrations,
@@ -1394,8 +1390,8 @@ def main():
                                                                     pre_update=False)
         #  Done running tests so we are disabling the instances.
         disable_instances(build, all_module_instances, prints_manager)
-        #  Reinstalling test pack again
-        install_private_pack(build, prints_manager)
+        # Create and install private test pack
+        create_install_private_testing_pack(build, prints_manager)
 
     else:
         if LooseVersion(build.server_numeric_version) >= LooseVersion('6.0.0'):
