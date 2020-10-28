@@ -544,6 +544,7 @@ jobs:
           steps:
             - run:
                 name: Prepare Content Packs For Testing
+                shell: /bin/bash
                 when: always
                 command: |
                   ./Tests/scripts/prepare_content_packs_for_testing.sh
