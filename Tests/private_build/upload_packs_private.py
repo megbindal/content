@@ -20,7 +20,8 @@ from Tests.scripts.utils.log_util import install_logging
 
 
 def get_packs_names(target_packs):
-    """Detects and returns packs names to upload.
+    """
+    Detects and returns packs names to upload.
 
     In case that `Modified` is passed in target_packs input, checks the git difference between two commits,
     current and previous and greps only ones with prefix Packs/.
@@ -61,6 +62,13 @@ def get_packs_names(target_packs):
 
 
 def is_pack_paid_or_premium(path_to_pack_metadata_in_index):
+    """
+    Determines if a pack is a paid or premium pack.
+
+    :param path_to_pack_metadata_in_index: The path to the pack_metadata.json in the index for the
+    tested pack.
+    :return: Boolean response if pack is paid or premium.
+    """
     with open(path_to_pack_metadata_in_index, 'r') as pack_metadata_file:
         pack_metadata = json.load(pack_metadata_file)
 
@@ -70,6 +78,12 @@ def is_pack_paid_or_premium(path_to_pack_metadata_in_index):
 
 
 def delete_public_packs_from_index(index_folder_path):
+    """
+    Removes all packs which are not private from the index.
+
+    :param index_folder_path: Path to the index folder.
+    :return: None
+    """
     packs_in_index = [pack_dir.name for pack_dir in os.scandir(index_folder_path) if pack_dir.is_dir()]
     for pack_name in packs_in_index:
         path_to_pack = os.path.join(index_folder_path, pack_name)
@@ -141,6 +155,13 @@ def download_and_extract_index(storage_bucket, extract_destination_path):
 
 
 def update_private_index(private_index_path, unified_index_path):
+    """
+    Updates the private index by copying the unified index to the private index.
+
+    :param private_index_path: Path to the private index.
+    :param unified_index_path: Path to the unified index.
+    :return:
+    """
     private_packs_names = [d for d in os.listdir(private_index_path) if
                            os.path.isdir(os.path.join(private_index_path, d))]
 
@@ -151,7 +172,8 @@ def update_private_index(private_index_path, unified_index_path):
 
 
 def update_index_folder(index_folder_path, pack_name, pack_path, pack_version='', hidden_pack=False):
-    """Copies pack folder into index folder.
+    """
+    Copies pack folder into index folder.
 
     Args:
         index_folder_path (str): full path to index folder.
@@ -634,6 +656,12 @@ def check_if_index_is_updated(index_folder_path, content_repo, current_commit_ha
 
 
 def should_upload_core_packs(storage_bucket_name):
+    """
+    Indicates if the core packs should be updated.
+    :param storage_bucket_name: Name of the storage bucket. Typically either marketplace-dist, or
+                                marketplace-private-dist.
+    :return: Boolean indicating if the core packs need to be updated.
+    """
     is_private_storage_bucket = (storage_bucket_name != GCPConfig.PRODUCTION_PRIVATE_BUCKET)
     is_private_ci_bucket = (storage_bucket_name != GCPConfig.CI_PRIVATE_BUCKET)
     return not (is_private_storage_bucket or is_private_ci_bucket)
@@ -718,6 +746,11 @@ def add_pr_comment(comment):
 
 
 def handle_github_response(response):
+    """
+    Handles the response from the GitHub server after making a request.
+    :param response: Response from the server.
+    :return: The returned response.
+    """
     res_dict = response.json()
     if not res_dict.get('ok'):
         logging.warning(f'Add pull request comment failed: {res_dict.get("message")}')
@@ -728,6 +761,22 @@ def create_and_upload_marketplace_pack(upload_config, pack, storage_bucket, inde
                                        packs_dependencies_mapping,
                                        private_storage_bucket=None, content_repo=None, current_commit_hash='',
                                        remote_previous_commit_hash='', packs_statistic_df=None):
+    """
+    The main logic flow for the create and upload process. Acts as a decision tree while consistently
+    checking the status of the progress being made.
+
+    :param upload_config: Configuration for the script as handled by the Option Handler.
+    :param pack: Pack object.
+    :param storage_bucket: Bucket the changes are being uploaded to.
+    :param index_folder_path: Path to the index folder.
+    :param packs_dependencies_mapping: Used by format_metadata to add dependencies to the metadata file.
+    :param private_storage_bucket: Bucket where the private packs are uploaded.
+    :param content_repo: The main content repository. demisto/content
+    :param current_commit_hash: Current commit hash for the run. Used in the pack metadata file.
+    :param remote_previous_commit_hash: Previous commit hash. Used for comparison.
+    :param packs_statistic_df: Dataframe object containing current pack analytics.
+    :return:
+    """
     build_number = upload_config.ci_build_number
     remove_test_playbooks = upload_config.remove_test_playbooks
     signature_key = upload_config.key_string
@@ -907,6 +956,11 @@ def option_handler():
 
 
 def prepare_test_directories():
+    """
+    Ensures the testing directories are present for the private build. If a directory needs to exist
+    for multiple steps, tempdir is ineffective.
+    :return: None
+    """
     packs_dir = '/home/runner/work/content-private/content-private/content/artifacts/packs'
     zip_path = '/home/runner/work/content-private/content-private/content/temp-dir'
     if not os.path.exists(packs_dir):
