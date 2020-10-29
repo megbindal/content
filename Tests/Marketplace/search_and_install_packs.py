@@ -17,6 +17,12 @@ SUCCESS_FLAG = True
 
 
 def get_pack_display_name(pack_id):
+    """
+    Gets the display name of the pack from the pack ID.
+
+    :param pack_id: ID of the pack.
+    :return: Name found in the pack metadata, otherwise an empty string.
+    """
     metadata_path = os.path.join(PACKS_FULL_PATH, pack_id, PACK_METADATA_FILE)
     if pack_id and os.path.isfile(metadata_path):
         with open(metadata_path, 'r') as json_file:
@@ -168,18 +174,69 @@ def search_pack(client: demisto_client, prints_manager: ParallelPrintsManager, p
         lock.release()
 
 
+def install_testing_license(client, host, prints_manager, thread_index):
+    """
+    Installs the current license in content-test-conf. Private packs require a specific license to be
+    uploaded. This function should be replaced when the AMI has the new license baked in.
+
+    :param client: Demisto-py client to connect to the server.
+    :param host: FQDN of the server.
+    :param prints_manager: ParallelPrintsManager - Will be deprecated.
+    :param thread_index: Integer indicating which thread the test is running on.
+    :return: None. Call to server waits until a successful response.
+    """
+    #  TODO: Remove this function when AMI contains new license.
+    license_path = '/home/runner/work/content-private/content-private/content-test-conf/demisto.lic'
+    header_params = {
+        'Content-Type': 'multipart/form-data'
+    }
+    file_path = os.path.abspath(license_path)
+    files = {'file': file_path}
+
+    message = 'Making "POST" request to server {} - to update the license {}'.format(
+        host, license_path)
+    prints_manager.add_print_job(message, print_color, thread_index, LOG_COLORS.GREEN,
+                                 include_timestamp=True)
+    prints_manager.execute_thread_prints(thread_index)
+    try:
+        response_data, status_code, _ = client.api_client.call_api(
+            resource_path='/license/upload',
+            method='POST',
+            header_params=header_params, files=files)
+        if 200 <= status_code < 300:
+            message = 'License was successfully updated!\n'
+            prints_manager.add_print_job(message, print_color, thread_index, LOG_COLORS.GREEN, include_timestamp=True)
+        else:
+            result_object = ast.literal_eval(response_data)
+            message = result_object.get('message', '')
+            err_msg = f'Failed to install packs - with status code {status_code}\n{message}\n'
+            prints_manager.add_print_job(err_msg, print_error, thread_index, include_timestamp=True)
+            raise Exception(err_msg)
+    except ApiException:
+        print("Failed to upload license.")
+
+
 def install_packs_from_artifacts(client, host, prints_manager, thread_index, packs_to_install):
+    """
+    Installs all the packs located in the artifacts folder of the BitHub actions build. Please note:
+    The server always returns a 200 status even if the pack was not installed.
+
+    :param client: Demisto-py client to connect to the server.
+    :param host: FQDN of the server.
+    :param prints_manager: ParallelPrintsManager - Will be deprecated.
+    :param thread_index: Integer indicating which thread the test is running on.
+    :return: None. Call to server waits until a successful response.
+    """
     local_packs = glob.glob(
         "/home/runner/work/content-private/content-private/content/artifacts/packs/*.zip")
+    packs_install_msg = f'Installing the following packs: {packs_to_install}'
+    prints_manager.add_print_job(packs_install_msg, print_color, thread_index, LOG_COLORS.GREEN,
+                                 include_timestamp=True)
     with open('./Tests/content_packs_to_install.txt', 'r') as packs_stream:
         pack_ids = packs_stream.readlines()
         pack_ids_to_install = [pack_id.rstrip('\n') for pack_id in pack_ids]
     for local_pack in local_packs:
         if any(pack_id in local_pack for pack_id in pack_ids_to_install):
-            packs_install_msg = f'Installing the following pack: {local_pack}'
-            prints_manager.add_print_job(packs_install_msg, print_color, thread_index,
-                                         LOG_COLORS.GREEN,
-                                         include_timestamp=True)
             upload_zipped_packs(client=client, host=host, prints_manager=prints_manager,
                                 thread_index=thread_index, pack_path=local_pack)
 
@@ -194,22 +251,7 @@ def install_packs_private(client, host, prints_manager, thread_index, packs_to_i
         thread_index (int): the thread index.
         packs_to_install (list): A list of the packs to install.
     """
-    install_packs_from_artifacts(client, host, prints_manager, thread_index, packs_to_install)
-
-
-def install_packs_from_artifacts(client, host, prints_manager, thread_index, packs_to_install):
-    local_packs = glob.glob(
-        "/home/runner/work/content-private/content-private/content/artifacts/packs/*.zip")
-    packs_install_msg = f'Installing the following packs: {packs_to_install}'
-    prints_manager.add_print_job(packs_install_msg, print_color, thread_index, LOG_COLORS.GREEN,
-                                 include_timestamp=True)
-    with open('./Tests/content_packs_to_install.txt', 'r') as packs_stream:
-        pack_ids = packs_stream.readlines()
-        pack_ids_to_install = [pack_id.rstrip('\n') for pack_id in pack_ids]
-    for local_pack in local_packs:
-        if any(pack_id in local_pack for pack_id in pack_ids_to_install):
-            upload_zipped_packs(client=client, host=host, prints_manager=prints_manager,
-                                thread_index=thread_index, pack_path=local_pack)
+    install_packs_from_artifacts(client, host, prints_manager, thread_index)
 
 
 def install_packs(client, host, prints_manager, thread_index, packs_to_install, request_timeout=999999):
@@ -303,6 +345,14 @@ def search_pack_and_its_dependencies(client, prints_manager, pack_id, packs_to_i
 
 
 def add_pack_to_installation_request(pack_id, installation_request_body):
+    """
+    Adds a pack to the pack_ids variable which is given to the search_and_install_packs_and_their_dependencies
+    function. The request must have the ID and Version.
+
+    :param pack_id: Id of the pack to add.
+    :param installation_request_body: The current pack_ids object to be modified.
+    :return: Updated installation_request_body object.
+    """
     metadata_path = os.path.join(PACKS_FULL_PATH, pack_id, PACK_METADATA_FILE)
     with open(metadata_path, 'r') as json_file:
         pack_metadata = json.load(json_file)
@@ -314,6 +364,15 @@ def add_pack_to_installation_request(pack_id, installation_request_body):
 
 
 def install_all_content_packs(client, host, prints_manager, thread_index=0):
+    """
+    Iterates over the packs currently located in the Packs directory. Wrapper for install_packs.
+
+    :param client: Demisto-py client to connect to the server.
+    :param host: FQDN of the server.
+    :param prints_manager: ParallelPrintsManager - Will be deprecated.
+    :param thread_index: Integer indicating which thread the test is running on.
+    :return: None. Prints the response from the server in the build.
+    """
     all_packs = []
 
     for pack_id in os.listdir(PACKS_FULL_PATH):
@@ -402,6 +461,8 @@ def search_and_install_packs_and_their_dependencies_private(pack_ids, client, pr
                                 'lock': lock})
         threads_list.append(thread)
     run_threads_list(threads_list)
+
+    install_packs_private(client, host, prints_manager, thread_index, installation_request_body)
 
     return packs_to_install, SUCCESS_FLAG
 
