@@ -965,7 +965,7 @@ class Pack(object):
             latest_release_notes: The latest release notes version string in the current branch
         """
         changelog_latest_release_notes = max(changelog, key=lambda k: LooseVersion(k))
-        assert latest_release_notes >= changelog_latest_release_notes.vstring, \
+        assert latest_release_notes >= changelog_latest_release_notes, \
             f'{self._pack_name}: Version mismatch detected between production bucket and current branch\n' \
             f'Production bucket version: {changelog_latest_release_notes}, ' \
             f'current branch version: {latest_release_notes}' \

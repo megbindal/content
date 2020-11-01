@@ -918,6 +918,7 @@ async def handle_dm(user: dict, text: str, client: slack.WebClient):
     Returns:
         Text to return to the user
     """
+    
     demisto.info('Slack - handling direct message.')
     message: str = text.lower()
     if message.find('incident') != -1 and (message.find('create') != -1
