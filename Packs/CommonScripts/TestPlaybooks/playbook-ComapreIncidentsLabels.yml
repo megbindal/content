@@ -17,6 +17,7 @@ tasks:
       '#none#':
       - "1"
     separatecontext: false
+
     view: |-
       {
         "position": {
