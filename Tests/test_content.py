@@ -1236,7 +1236,7 @@ def acquire_test_lock(integrations_details: list,
                       test_timeout: int,
                       prints_manager: ParallelPrintsManager,
                       thread_index: int,
-                      test_settings: TestsSettings) -> None:
+                      test_settings: SettingsTester) -> None:
     """
     This is a context manager that handles all the locking and unlocking of integrations.
     Execution is as following:
@@ -1248,7 +1248,7 @@ def acquire_test_lock(integrations_details: list,
         test_timeout: test timeout in seconds
         prints_manager: ParallelPrintsManager object
         thread_index: The index of the thread that executes the unlocking
-        conf_json_path: Path to conf.json file
+        test_settings: SettingsTester object.
     Yields:
         A boolean indicating the lock attempt result
     """
@@ -1266,7 +1266,7 @@ def acquire_test_lock(integrations_details: list,
         prints_manager.execute_thread_prints(thread_index)
 
 
-def safe_unlock_integrations(prints_manager: ParallelPrintsManager, integrations_details: list, thread_index: int, test_settings: TestsSettings):
+def safe_unlock_integrations(prints_manager: ParallelPrintsManager, integrations_details: list, thread_index: int, test_settings: SettingsTester):
     """
     This integration safely unlocks the test's integrations.
     If an unexpected error occurs - this method will log it's details and other tests execution will continue
@@ -1290,7 +1290,7 @@ def safe_lock_integrations(test_timeout: int,
                            prints_manager: ParallelPrintsManager,
                            integrations_details: list,
                            thread_index: int,
-                           test_settings: TestsSettings) -> bool:
+                           test_settings: SettingsTester) -> bool:
     """
     This integration safely locks the test's integrations and return it's result
     If an unexpected error occurs - this method will log it's details and return False
@@ -1299,7 +1299,7 @@ def safe_lock_integrations(test_timeout: int,
         prints_manager: ParallelPrintsManager object
         integrations_details: test integrations details
         thread_index: The index of the thread that executes the unlocking
-        test_settings: Path to conf.json file
+        test_settings: SettingsTester object.
 
     Returns:
         A boolean indicating the lock attempt result
