@@ -502,13 +502,10 @@ class TestChangelogCreation:
             }
         }
         branch_latest_version = '1.9.9'
-        try:
+        with pytest.raises(AssertionError):
             Pack.assert_production_bucket_version_matches_release_notes_version(dummy_pack,
                                                                                 changelog,
                                                                                 branch_latest_version)
-            assert False, 'should fail because current branch pack version is lower than production bucket branch'
-        except AssertionError:
-            pass
 
     def test_clean_release_notes_lines(self):
         original_rn = '''
