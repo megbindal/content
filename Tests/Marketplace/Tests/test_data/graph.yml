@@ -1,0 +1,41 @@
+!!python/object:networkx.classes.digraph.DiGraph
+_adj: &id004
+  '1':
+    '2': &id001 {}
+    '4': &id003 {}
+  '2':
+    '3': &id002 {}
+  '3': {}
+  '4': {}
+  '5': {}
+_node: &id006
+  '1':
+    mandatory_for_packs: []
+  '2':
+    mandatory_for_packs: []
+  '3':
+    mandatory_for_packs: []
+  '4':
+    mandatory_for_packs:
+    - '1'
+  '5':
+    mandatory_for_packs: []
+_pred:
+  '1': {}
+  '2':
+    '1': *id001
+  '3':
+    '2': *id002
+  '4':
+    '1': *id003
+  '5': {}
+_succ: *id004
+adjlist_inner_dict_factory: &id005 !!python/name:builtins.dict ''
+adjlist_outer_dict_factory: *id005
+edge_attr_dict_factory: *id005
+graph: {}
+graph_attr_dict_factory: *id005
+node_attr_dict_factory: *id005
+node_dict_factory: *id005
+nodes: !!python/object:networkx.classes.reportviews.NodeView
+  _nodes: *id006
